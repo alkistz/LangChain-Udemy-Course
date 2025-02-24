@@ -1,14 +1,14 @@
-"""Python file to serve as the frontend"""
+import os
 
 import streamlit as st
-from streamlit_chat import message
-from dotenv import load_dotenv, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 from langchain.chains import LLMChain
-from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
-from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain.globals import get_verbose
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
+from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+from langchain_openai import AzureChatOpenAI
+from streamlit_chat import message
 
 get_verbose()
 
@@ -21,14 +21,24 @@ Human: {human_input}
 AI: """
 
 # TODO: Add prompt
+prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
 
 # TODO: Add Memory
+memory = ConversationBufferMemory(memory_key="history", chat_memory=msgs)
+
+llm = AzureChatOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    azure_deployment="gpt-4o",
+    openai_api_version="2024-08-01-preview",
+)
 
 
 def load_chain():
     # Add an LLMChain with memory and a prompt
+    llm_chain = LLMChain(llm=llm, prompt=prompt, memory=memory)
     return llm_chain
 
 
